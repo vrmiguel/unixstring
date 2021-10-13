@@ -1,0 +1,140 @@
+on: [push, pull_request]
+
+name: check-and-test
+
+
+jobs:
+  armv7-glibc:
+    name: Ubuntu 18.04 (for ARMv7 - glibc)
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: armv7-unknown-linux-gnueabihf
+          override: true
+      
+      - uses: actions-rs/cargo@v1
+        name: cargo check
+        with:
+          use-cross: true
+          command: check
+          args: --target=armv7-unknown-linux-musleabihf
+
+      - uses: actions-rs/cargo@v1
+        name: cargo test
+        with:
+          use-cross: true
+          command: test
+          args: --target=armv7-unknown-linux-musleabihf
+
+  armv7-musl:
+    name: Ubuntu 20.01 (for ARMv7 - musl)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: armv7-unknown-linux-musleabihf
+          override: true
+
+      - name: cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: check
+          args: --target=armv7-unknown-linux-musleabihf
+
+      - name: cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: test
+          args: --target=armv7-unknown-linux-musleabihf
+
+  ubuntu:
+    name: Ubuntu 20.04
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --target x86_64-unknown-linux-musl
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --target x86_64-unknown-linux-musl
+          
+  ubuntu-glibc:
+    name: Ubuntu 18.04 - glibc
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        rust:
+          - stable
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+
+  x86_64_macos:
+    name: macOS (x86_64)
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-apple-darwin
+          override: true
+
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
