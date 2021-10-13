@@ -1,5 +1,3 @@
-use std::{convert::TryFrom, ffi::OsString, path::PathBuf};
-
 use unixstring::UnixString;
 
 #[test]
@@ -26,9 +24,7 @@ fn size_one_vec() {
 
 #[test]
 fn valid_bytes() {
-    let abc = UnixString::from_bytes(
-        b"abc".to_vec()
-    ).unwrap();
+    let abc = UnixString::from_bytes(b"abc".to_vec()).unwrap();
 
     assert_eq!(abc.as_str().unwrap(), "abc");
 
@@ -39,9 +35,7 @@ fn valid_bytes() {
 
 #[test]
 fn invalid_bytes_fails() {
-    let abc = UnixString::from_bytes(
-        b"a\0bc".to_vec()
-    );
+    let abc = UnixString::from_bytes(b"a\0bc".to_vec());
 
     assert!(abc.is_err())
 }

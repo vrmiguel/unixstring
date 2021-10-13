@@ -9,5 +9,4 @@ license = "MIT"
 
 [dependencies]
 thiserror = "1.0.29"
-bytecount = "0.6.2"
 libc      = "0.2.103"

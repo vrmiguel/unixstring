@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, ffi::OsString, path::PathBuf};
+use std::{convert::TryFrom, ffi::OsString};
 
 use unixstring::UnixString;
 
