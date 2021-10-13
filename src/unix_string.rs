@@ -9,6 +9,7 @@ use std::{
 use crate::error::{Error, Result};
 use crate::memchr::find_nul_byte;
 
+/// An FFI-friendly null-terminated byte string.
 #[non_exhaustive]
 pub struct UnixString {
     inner: Vec<u8>,
@@ -43,13 +44,17 @@ impl UnixString {
     pub fn from_bytes(bytes: Vec<u8>) -> Result<Self> {
         match find_nul_byte(&bytes) {
             Some(nul_pos) if nul_pos + 1 == bytes.len() => Ok(Self { inner: bytes }),
-            Some(_nul_pos) => Err(Error::InternalNulByte),
+            Some(_nul_pos) => Err(Error::InteriorNulByte),
             None => {
                 let mut bytes = bytes;
                 bytes.extend(Some(b'\0'));
                 Ok(Self { inner: bytes })
             }
         }
+    }
+
+    pub unsafe fn as_ptr(&self) -> * const libc::c_char {
+        self.as_c_str().as_ptr()
     }
 
     fn inner_without_nul_terminator(&self) -> &[u8] {
@@ -109,7 +114,7 @@ impl UnixString {
     /// The terminating nul byte will not be included in the `&str`.
     ///
     /// If this byte string is not valid UTF-8, then an error is returned indicating the first invalid byte found and the length of the error.
-    /// If instead you wish for a lossy conversion to &str, then use one of the [`to_str_lossy`](unixstring::UnixString::to_string_lossy) or into_str_lossy methods.
+    /// If instead you wish for a lossy conversion to &str, then use [`to_str_lossy`](UnixString::to_string_lossy).
     pub fn as_str(&self) -> std::result::Result<&str, std::str::Utf8Error> {
         std::str::from_utf8(self.inner_without_nul_terminator())
     }
@@ -156,9 +161,8 @@ impl UnixString {
         String::from_utf8_unchecked(self.into_bytes())
     }
 
-    /// Convert this byte string into a &str if it’s valid UTF-8.
-    /// If this byte string is not valid UTF-8, then an error is returned. The error returned indicates the first invalid byte found and the length of the error.
-    /// In cases where a lossy conversion to &str is acceptable, then use one of the to_str_lossy or to_str_lossy_into methods.
+    /// Converts this `UnixString` into a String in a lossy manner. If the inner bytes invalid UTF-8, then the invalid bytes are replaced with the Unicode replacement codepoint.
+    /// If the bytes in this `UnixString` are valid UTF-8, no copying is done.
     pub fn to_string_lossy(&self) -> Cow<str> {
         self.as_os_str().to_string_lossy()
     }

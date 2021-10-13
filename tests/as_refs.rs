@@ -1,4 +1,8 @@
-use std::{convert::TryFrom, ffi::{CStr, CString, OsStr}, path::{Path, PathBuf}};
+use std::{
+    convert::TryFrom,
+    ffi::{CStr, CString, OsStr},
+    path::{Path, PathBuf},
+};
 
 use unixstring::UnixString;
 
