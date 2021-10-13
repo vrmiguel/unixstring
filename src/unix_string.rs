@@ -17,9 +17,8 @@ pub struct UnixString {
 
 impl UnixString {
     /// Constructs a new, empty `UnixString`.
-    /// The `UnixString`'s inner vector will not allocate until elements are pushed onto it.
-    pub const fn new() -> Self {
-        Self { inner: Vec::new() }
+    pub fn new() -> Self {
+        Self { inner: vec![0] }
     }
 
     /// Creates a [`UnixString`](UnixString) given a `Vec` of bytes.
@@ -53,15 +52,30 @@ impl UnixString {
         }
     }
 
-    pub unsafe fn as_ptr(&self) -> * const libc::c_char {
+    /// Constructs a new, empty `UnixString` with the specified capacity.
+    ///
+    /// The `UnixString`'s inner vector will be able to hold exactly `capacity` elements without
+    /// reallocating.
+    ///
+    /// This function will always allocate enough to fit the null terminator byte, even if the given capacity is 0.
+    ///
+    ///
+    /// # Panics
+    ///
+    /// Panics if the new capacity exceeds `isize::MAX - 1` bytes.
+    pub fn with_capacity(capacity: usize) -> Self {
+        let mut inner = Vec::with_capacity(capacity + 1);
+        inner.push(0);
+
+        Self { inner }
+    }
+
+    pub fn as_ptr(&self) -> *const libc::c_char {
         self.as_c_str().as_ptr()
     }
 
     fn inner_without_nul_terminator(&self) -> &[u8] {
-        match self.inner.get(0..self.inner.len() - 1) {
-            Some(bytes) => bytes,
-            None => &self.inner,
-        }
+        &self.inner[0..self.inner.len() - 1]
     }
 
     /// Converts the `UnixString` to an [`OsStr`] slice. This always succeeds and is zero cost. The terminating nul byte will not be included in the `OsStr` slice.

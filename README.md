@@ -1,4 +1,5 @@
-# unixstring
+# unixstring [![codecov](https://codecov.io/gh/vrmiguel/unixstring/branch/master/graph/badge.svg?token=6rvhsF5Eiq)](https://codecov.io/gh/vrmiguel/unixstring) ![Crates.io](https://img.shields.io/crates/v/unixstring) [![Docs](https://img.shields.io/badge/docs.rs-unixstring-green)](https://docs.rs/unixstring/)
+
 
 `UnixString` is an FFI-friendly null-terminated byte string that may be constructed from a [`String`], a [`CString`](https://doc.rust-lang.org/std/ffi/struct.CString.html), a [`PathBuf`](https://doc.rust-lang.org/std/path/struct.PathBuf.html), an [`OsString`](https://doc.rust-lang.org/std/ffi/struct.OsString.html) or a collection of bytes.
 

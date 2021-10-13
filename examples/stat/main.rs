@@ -14,11 +14,10 @@ fn stat(path: &UnixString) -> std::io::Result<libc::stat> {
     }
 }
 
-
-fn main() -> std::io::Result<()>{
+fn main() -> std::io::Result<()> {
     for arg in env::args_os().map(UnixString::try_from).flatten() {
         let stat = stat(&arg)?;
-        
+
         let size = stat.st_size;
 
         println!("{} occupies {} bytes.", arg.as_path().display(), size);
