@@ -70,10 +70,40 @@ impl UnixString {
         Self { inner }
     }
 
+    /// Clones a raw C string into an `UnixString`.
+    ///
+    /// The total size of the raw C string must be smaller than `isize::MAX` **bytes**
+    /// in memory due to calling the `slice::from_raw_parts` function.
+    ///
+    /// This method is unsafe for a number of reasons:
+    ///
+    /// * There is no guarantee to the validity of `ptr`.
+    /// * There is no guarantee that the memory pointed to by `ptr` contains a
+    ///   valid nul terminator byte at the end of the string.
+    /// * It is not guaranteed that the memory pointed by `ptr` won't change
+    ///   before the `UnixString` has been constructed.
+    pub unsafe fn from_ptr(ptr: *const libc::c_char) -> Self {
+        CStr::from_ptr(ptr).to_owned().into()
+    }
+
+    /// Returns an inner pointer to the data this `UnixString` contains.
+    ///
+    /// The returned pointer will be valid for as long as the given `UnixString` is, and points
+    /// to a null-terminated contiguous region of memory.
+    ///
+    /// *Note*: The returned pointer is read-only and writing to it in any way causes undefined behavior.
+    ///
+    /// You must ensure that the underlying memory is not
+    /// freed too early. If the `UnixString` is deallocated then the pointer becomes dangling.
+    ///
+    /// See [`CStr::as_ptr`](std::ffi::CStr::as_ptr) for more info.
+    ///
+    /// ```
     pub fn as_ptr(&self) -> *const libc::c_char {
         self.as_c_str().as_ptr()
     }
 
+    #[inline(always)]
     fn inner_without_nul_terminator(&self) -> &[u8] {
         &self.inner[0..self.inner.len() - 1]
     }

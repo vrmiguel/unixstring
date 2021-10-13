@@ -1,0 +1,12 @@
+[package]
+name = "getcwd"
+version = "0.1.0"
+edition = "2018"
+authors = ["Vinícius Rodrigues Miguel <vrmiguel99@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/vrmiguel/unixstring"
+license = "MIT"
+
+[dependencies]
+libc      = "0.2.103"
+unixstring = { path = "../unixstring" }
