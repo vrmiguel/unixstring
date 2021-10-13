@@ -21,6 +21,37 @@ impl UnixString {
         Self { inner: Vec::new() }
     }
 
+    /// Creates a [`UnixString`](UnixString) given a `Vec` of bytes.
+    /// 
+    /// This method will return an error if the given bytes have a zero byte, *except* if the zero byte is the last element of the `Vec`.
+    ///  
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let bytes_without_zero = vec![b'a', b'b', b'c'];
+    /// let bytes_with_nul_terminator = vec![b'a', b'b', b'c', 0];
+    /// let bytes_with_interior_nul = vec![b'a', 0, b'b', b'c'];
+    /// 
+    /// // Valid: no zero bytes were given
+    /// assert!(UnixString::from_bytes(bytes_without_zero).is_ok());
+    /// 
+    /// // Still valid: the zero byte is being used as the terminator
+    /// assert!(UnixString::from_bytes(bytes_with_nul_terminator).is_ok());
+    ///
+    /// // Invalid: an interior nul byte was found
+    /// assert!(UnixString::from_bytes(bytes_with_interior_nul).is_err()); 
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<Self> {
+        match find_nul_byte(&bytes) {
+            Some(nul_pos) if nul_pos + 1 == bytes.len() => Ok(Self { inner: bytes }),
+            Some(_nul_pos) => Err(Error::InternalNulByte),
+            None => {
+                let mut bytes = bytes;
+                bytes.extend(Some(b'\0'));
+                Ok(Self { inner: bytes })
+            }
+        }
+    }
+
     fn inner_without_nul_terminator(&self) -> &[u8] {
         match self.inner.get(0..self.inner.len() - 1) {
             Some(bytes) => bytes,
@@ -93,9 +124,7 @@ impl UnixString {
     ///
     /// The inverse of this method is into_bytes.
     pub fn into_string(self) -> std::result::Result<String, FromUtf8Error> {
-        let mut bytes = self.inner;
-        bytes.remove(bytes.len() - 1);
-        String::from_utf8(bytes)
+        String::from_utf8(self.into_bytes())
     }
 
     /// Converts a `UnixString` into a `String` without checking that the
@@ -124,9 +153,7 @@ impl UnixString {
     /// assert_eq!("👶", baby);
     /// ```
     pub unsafe fn into_string_unchecked(self) -> String {
-        let mut bytes = self.inner;
-        bytes.remove(bytes.len() - 1);
-        String::from_utf8_unchecked(bytes)
+        String::from_utf8_unchecked(self.into_bytes())
     }
 
     /// Convert this byte string into a &str if it’s valid UTF-8.
@@ -136,30 +163,48 @@ impl UnixString {
         self.as_os_str().to_string_lossy()
     }
 
-    /// Creates a [`UnixString`](UnixString) given a
-    ///
-    pub fn from_bytes(bytes: Vec<u8>) -> Result<Self> {
-        match find_nul_byte(&bytes) {
-            Some(nul_pos) if nul_pos + 1 == bytes.len() => Ok(Self { inner: bytes }),
-            Some(_nul_pos) => Err(Error::InternalNulByte),
-            None => {
-                let mut bytes = bytes;
-                bytes.extend(Some(b'\0'));
-                Ok(Self { inner: bytes })
-            }
-        }
-    }
-
+    /// Gets the underlying byte view of this `UnixString` *without* the nul terminator.
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let bytes = b"abc\0".to_vec();
+    /// let unix_string = UnixString::from_bytes(bytes).unwrap();
+    /// 
+    /// assert_eq!(
+    ///     unix_string.as_bytes(),
+    ///     &[b'a', b'b', b'c']
+    /// );
     pub fn as_bytes(&self) -> &[u8] {
         self.inner_without_nul_terminator()
     }
 
+    /// Gets the underlying byte view of this `UnixString` *including* the nul terminator.
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let bytes = b"abc\0".to_vec();
+    /// let unix_string = UnixString::from_bytes(bytes).unwrap();
+    /// 
+    /// assert_eq!(
+    ///     unix_string.as_bytes_with_nul(),
+    ///     &[b'a', b'b', b'c', 0]
+    /// );
     pub fn as_bytes_with_nul(&self) -> &[u8] {
         &self.inner
     }
 
+    /// Returns the inner representation of a `UnixString`.
+    /// 
+    /// The `UnixString`'s nul terminator byte will be included.
     pub fn into_bytes_with_nul(self) -> Vec<u8> {
         self.inner
+    }
+
+    /// Returns the inner representation of a `UnixString` with its nul-terminator removed.
+    pub fn into_bytes(self) -> Vec<u8> {
+        let mut bytes = self.inner;
+        bytes.remove(bytes.len() - 1);
+        bytes
     }
 }
 
