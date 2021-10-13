@@ -13,6 +13,10 @@ pub fn memchr(needle: u8, haystack: &[u8]) -> Option<usize> {
     }
 }
 
+pub fn find_nul_byte(bytes: &[u8]) -> Option<usize> {
+    memchr(0, &bytes)
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -20,7 +24,13 @@ mod tests {
 
     #[test]
     fn memchr_() {
-        let text = "textwithoutnulbytes/0orisit?";
-        assert!(memchr(b'0', text.as_bytes()).is_none())
+        let text = "textwithoutnulbytes";
+        assert!(memchr(0, text.as_bytes()).is_none());
+
+
+        let text = "textwithout\0nulbytes";
+        dbg!(memchr(0, text.as_bytes()));
+        assert!(
+            matches!(memchr(0, text.as_bytes()), Some(11)));
     }
 }

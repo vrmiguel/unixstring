@@ -1,6 +1,6 @@
 mod error;
 mod memchr;
-mod unixstring;
+mod unix_string;
 
 pub use error::{Error, Result};
-pub use unixstring::UnixString;
+pub use unix_string::UnixString;
