@@ -27,10 +27,8 @@ mod tests {
         let text = "textwithoutnulbytes";
         assert!(memchr(0, text.as_bytes()).is_none());
 
-
         let text = "textwithout\0nulbytes";
         dbg!(memchr(0, text.as_bytes()));
-        assert!(
-            matches!(memchr(0, text.as_bytes()), Some(11)));
+        assert!(matches!(memchr(0, text.as_bytes()), Some(11)));
     }
 }
