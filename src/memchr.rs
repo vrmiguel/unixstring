@@ -14,7 +14,7 @@ pub fn memchr(needle: u8, haystack: &[u8]) -> Option<usize> {
 }
 
 pub fn find_nul_byte(bytes: &[u8]) -> Option<usize> {
-    memchr(0, &bytes)
+    memchr(0, bytes)
 }
 
 #[cfg(test)]

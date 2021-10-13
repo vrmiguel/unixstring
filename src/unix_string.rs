@@ -22,24 +22,24 @@ impl UnixString {
     }
 
     /// Creates a [`UnixString`](UnixString) given a `Vec` of bytes.
-    /// 
+    ///
     /// This method will return an error if the given bytes have a zero byte, *except* if the zero byte is the last element of the `Vec`.
     ///  
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// let bytes_without_zero = vec![b'a', b'b', b'c'];
     /// let bytes_with_nul_terminator = vec![b'a', b'b', b'c', 0];
     /// let bytes_with_interior_nul = vec![b'a', 0, b'b', b'c'];
-    /// 
+    ///
     /// // Valid: no zero bytes were given
     /// assert!(UnixString::from_bytes(bytes_without_zero).is_ok());
-    /// 
+    ///
     /// // Still valid: the zero byte is being used as the terminator
     /// assert!(UnixString::from_bytes(bytes_with_nul_terminator).is_ok());
     ///
     /// // Invalid: an interior nul byte was found
-    /// assert!(UnixString::from_bytes(bytes_with_interior_nul).is_err()); 
+    /// assert!(UnixString::from_bytes(bytes_with_interior_nul).is_err());
     pub fn from_bytes(bytes: Vec<u8>) -> Result<Self> {
         match find_nul_byte(&bytes) {
             Some(nul_pos) if nul_pos + 1 == bytes.len() => Ok(Self { inner: bytes }),
@@ -166,10 +166,10 @@ impl UnixString {
     /// Gets the underlying byte view of this `UnixString` *without* the nul terminator.
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// let bytes = b"abc\0".to_vec();
     /// let unix_string = UnixString::from_bytes(bytes).unwrap();
-    /// 
+    ///
     /// assert_eq!(
     ///     unix_string.as_bytes(),
     ///     &[b'a', b'b', b'c']
@@ -181,10 +181,10 @@ impl UnixString {
     /// Gets the underlying byte view of this `UnixString` *including* the nul terminator.
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// let bytes = b"abc\0".to_vec();
     /// let unix_string = UnixString::from_bytes(bytes).unwrap();
-    /// 
+    ///
     /// assert_eq!(
     ///     unix_string.as_bytes_with_nul(),
     ///     &[b'a', b'b', b'c', 0]
@@ -194,7 +194,7 @@ impl UnixString {
     }
 
     /// Returns the inner representation of a `UnixString`.
-    /// 
+    ///
     /// The `UnixString`'s nul terminator byte will be included.
     pub fn into_bytes_with_nul(self) -> Vec<u8> {
         self.inner
