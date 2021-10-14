@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    convert::{TryFrom, TryInto},
     ffi::{CStr, CString, OsStr, OsString},
     os::unix::prelude::OsStrExt,
     path::{Path, PathBuf},
@@ -23,7 +22,11 @@ impl Default for UnixString {
 }
 
 impl UnixString {
-    /// Constructs a new, empty `UnixString`.
+    /// Constructs a new, "empty" `UnixString`.
+    ///
+    /// This function allocates a byte in order to store its nul terminator.
+    ///
+    /// If you are creating a `UnixString` with the intention of writing stuff to it, you may be interested in [`UnixString::with_capacity`](UnixString::with_capacity).
     pub fn new() -> Self {
         Self::default()
     }
@@ -35,7 +38,9 @@ impl UnixString {
     }
 
     /// Extends the `UnixString` with anything that implements [`AsRef`](std::convert::AsRef)<[`OsStr`](std::ffi::OsStr)>.
+    ///
     /// This method fails if the given data has a zero byte anywhere but at its end.
+    ///
     /// ```rust
     /// # use unixstring::Result;
     /// use std::path::Path;
@@ -55,7 +60,9 @@ impl UnixString {
     }
 
     /// Extends the `UnixString` with the given bytes.
-    /// This method fails if the bytes contain an interior zero byte.
+    ///
+    /// This method fails if the bytes contain an interior zero byte (a zero byte not at the buffer's final position)
+    ///
     /// ```rust
     /// # use unixstring::Result;
     /// use std::path::Path;
@@ -237,8 +244,6 @@ impl UnixString {
     /// If the validity check passes, the resulting `String` will reuse the allocation of the `UnixString`'s inner buffer and no copy will be done.
     ///
     /// If you need a `&str` instead of a `String`, consider [`UnixString::as_str`](UnixString::as_str).
-    ///
-    /// The inverse of this method is into_bytes.
     pub fn into_string(self) -> Result<String> {
         Ok(String::from_utf8(self.into_bytes())?)
     }
@@ -272,7 +277,10 @@ impl UnixString {
         String::from_utf8_unchecked(self.into_bytes())
     }
 
-    /// Converts this `UnixString` into a String in a lossy manner. If the inner bytes invalid UTF-8, then the invalid bytes are replaced with the Unicode replacement codepoint.
+    /// Converts this `UnixString` into a String in a lossy manner.
+    ///
+    /// If the inner bytes invalid UTF-8, then the invalid bytes are replaced with the Unicode replacement codepoint.
+    ///  
     /// If the bytes in this `UnixString` are valid UTF-8, no copying is done.
     pub fn to_string_lossy(&self) -> Cow<str> {
         self.as_os_str().to_string_lossy()
@@ -291,6 +299,33 @@ impl UnixString {
     /// );
     pub fn as_bytes(&self) -> &[u8] {
         self.inner_without_nul_terminator()
+    }
+
+    /// Converts a `UnixString` into an [`OsString`].
+    ///
+    /// This operation is zero-cost.
+    ///
+    /// If you need a `&OsStr` instead of an `OsString`, consider [`UnixString::as_os_str`](UnixString::as_os_str).
+    pub fn into_os_string(self) -> OsString {
+        self.into()
+    }
+
+    /// Converts a `UnixString` into a [`PathBuf`].
+    ///
+    /// This operation is zero-cost.
+    ///
+    /// If you need a `&Path` instead of a `PathBuf`, consider [`UnixString::as_path`](UnixString::as_path).
+    pub fn into_pathbuf(self) -> PathBuf {
+        self.into()
+    }
+
+    /// Converts a `UnixString` into a [`PathBuf`].
+    ///
+    /// This operation is zero-cost.
+    ///
+    /// If you need a `&CStr` instead of a `CString`, consider [`UnixString::as_c_str`](UnixString::as_c_str).
+    pub fn into_cstring(self) -> CString {
+        self.into()
     }
 
     /// Gets the underlying byte view of this `UnixString` *including* the nul terminator.
@@ -320,58 +355,6 @@ impl UnixString {
         let mut bytes = self.inner;
         bytes.remove(bytes.len() - 1);
         bytes
-    }
-}
-
-impl AsRef<Path> for UnixString {
-    fn as_ref(&self) -> &Path {
-        self.as_path()
-    }
-}
-
-impl AsRef<CStr> for UnixString {
-    fn as_ref(&self) -> &CStr {
-        self.as_c_str()
-    }
-}
-
-impl AsRef<OsStr> for UnixString {
-    fn as_ref(&self) -> &OsStr {
-        self.as_os_str()
-    }
-}
-
-impl TryFrom<PathBuf> for UnixString {
-    type Error = crate::error::Error;
-
-    fn try_from(value: PathBuf) -> Result<Self> {
-        value.into_os_string().try_into()
-    }
-}
-
-impl TryFrom<OsString> for UnixString {
-    type Error = crate::error::Error;
-
-    fn try_from(value: OsString) -> Result<Self> {
-        use std::os::unix::prelude::OsStringExt;
-
-        Self::from_bytes(value.into_vec())
-    }
-}
-
-impl TryFrom<String> for UnixString {
-    type Error = crate::error::Error;
-
-    fn try_from(value: String) -> Result<Self> {
-        Self::from_bytes(value.into_bytes())
-    }
-}
-
-impl TryFrom<Vec<u8>> for UnixString {
-    type Error = crate::error::Error;
-
-    fn try_from(bytes: Vec<u8>) -> Result<Self> {
-        Self::from_bytes(bytes)
     }
 }
 

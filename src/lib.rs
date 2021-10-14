@@ -3,8 +3,11 @@
 //!
 //! An [`UnixString`](UnixString) can then be converted into a slice of [`CStr`](std::ffi::CStr), [`Path`](std::path::Path) or [`OsStr`](std::ffi::OsStr) in infallible and zero-cost operations.
 
+mod as_ref;
 mod error;
+mod from;
 mod memchr;
+mod try_from;
 mod unix_string;
 
 pub use error::{Error, Result};

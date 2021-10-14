@@ -42,6 +42,24 @@ fn push_bytes() {
 }
 
 #[test]
+fn push_byte_failure_does_not_alter_the_unix_string() {
+    let abc = b"abc".to_vec();
+    let a0bc = b"a\0bc".to_vec();
+
+    let mut unxstr = UnixString::new();
+
+    unxstr.push_bytes(&abc).unwrap();
+
+    assert_eq!(unxstr.as_bytes_with_nul(), &b"abc\0".to_vec());
+
+    // This one will fail, but what we want to see is if this alters the UnixString at all
+    unxstr.push_bytes(&a0bc).unwrap_err();
+
+    // This assertion must once again pass since a failed `push_bytes` must not leave us with a broken UnixString
+    assert_eq!(unxstr.as_bytes_with_nul(), &b"abc\0".to_vec());
+}
+
+#[test]
 fn push_byte_fails_with_interior_zero_bytes() {
     let a0bc = b"a\0bc".to_vec();
 
