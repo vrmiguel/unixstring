@@ -141,6 +141,8 @@ impl UnixString {
     /// The total size of the raw C string must be smaller than `isize::MAX` **bytes**
     /// in memory due to calling the `slice::from_raw_parts` function.
     ///
+    /// # Safety
+    ///
     /// This method is unsafe for a number of reasons:
     ///
     /// * There is no guarantee to the validity of `ptr`.
@@ -148,6 +150,8 @@ impl UnixString {
     ///   valid nul terminator byte at the end of the string.
     /// * It is not guaranteed that the memory pointed by `ptr` won't change
     ///   before the `UnixString` has been constructed.
+    ///
+    /// See [`CStr::from_ptr`](std::ffi::CStr::from_ptr) for more info.
     pub unsafe fn from_ptr(ptr: *const libc::c_char) -> Self {
         CStr::from_ptr(ptr).to_owned().into()
     }
@@ -164,7 +168,6 @@ impl UnixString {
     ///
     /// See [`CStr::as_ptr`](std::ffi::CStr::as_ptr) for more info.
     ///
-    /// ```
     pub fn as_ptr(&self) -> *const libc::c_char {
         self.as_c_str().as_ptr()
     }
@@ -190,8 +193,6 @@ impl UnixString {
     ///
     /// ```
     pub fn as_os_str(&self) -> &OsStr {
-        use std::os::unix::ffi::OsStrExt;
-
         OsStr::from_bytes(self.inner_without_nul_terminator())
     }
 

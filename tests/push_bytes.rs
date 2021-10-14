@@ -60,7 +60,6 @@ fn push_null_terminated_bytes() {
     unxstr.push_bytes(&abc).unwrap();
     assert_eq!(unxstr.as_bytes_with_nul(), &[b'a', b'b', b'c', 0]);
 
-
     unxstr.push_bytes(&abc2).unwrap();
     assert_eq!(unxstr.as_bytes_with_nul(), &b"abcabc\0".to_vec());
 
