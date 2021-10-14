@@ -1,11 +1,9 @@
 use std::{
     convert::TryFrom,
-    ffi::{CStr, OsStr},
-    os::unix::prelude::OsStrExt,
+    ffi::{CStr, CString},
     path::PathBuf,
 };
 
-use libc::{c_char, getcwd, PATH_MAX};
 use unixstring::UnixString;
 
 #[test]
@@ -24,18 +22,11 @@ fn as_ptr() {
 
 #[test]
 fn from_ptr() {
-    const PATH_SIZ: usize = 1024;
-    let mut buf: [c_char; 1024] = [0; 1024];
+    let home = CString::new("/home/vrmiguel").unwrap();
 
-    let ptr = &mut buf as *mut c_char;
+    let ptr = home.as_ptr();
 
-    unsafe { getcwd(ptr, PATH_SIZ) };
+    let unix_string = unsafe { UnixString::from_ptr(ptr) };
 
-    if ptr.is_null() {
-        panic!("getcwd failed");
-    }
-
-    let unix_string = unsafe { UnixString::from_ptr(ptr as *const c_char) };
-
-    assert_eq!(unix_string.as_path(), std::env::current_dir().unwrap())
+    assert_eq!(home.as_c_str(), unix_string.as_c_str())
 }

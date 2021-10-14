@@ -3,6 +3,10 @@
 pub enum Error {
     #[error("Interior zero byte found during CString construction")]
     InteriorNulByte,
+    #[error("Failed to interpret a sequence of bytes as a string: {0}")]
+    IntoUtf8(#[from] std::str::Utf8Error),
+    #[error("Failed to create a String from a sequence of bytes: {0}")]
+    FromUtf8(#[from] std::string::FromUtf8Error),
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 }

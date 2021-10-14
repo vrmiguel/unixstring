@@ -2,23 +2,89 @@ use std::{
     borrow::Cow,
     convert::{TryFrom, TryInto},
     ffi::{CStr, CString, OsStr, OsString},
+    os::unix::prelude::OsStrExt,
     path::{Path, PathBuf},
-    string::FromUtf8Error,
 };
 
 use crate::error::{Error, Result};
 use crate::memchr::find_nul_byte;
 
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// An FFI-friendly null-terminated byte string.
 #[non_exhaustive]
 pub struct UnixString {
     inner: Vec<u8>,
 }
 
+impl Default for UnixString {
+    fn default() -> Self {
+        Self { inner: vec![0] }
+    }
+}
+
 impl UnixString {
     /// Constructs a new, empty `UnixString`.
     pub fn new() -> Self {
-        Self { inner: vec![0] }
+        Self::default()
+    }
+
+    #[inline(always)]
+    fn extend_slice(&mut self, slice: &[u8]) {
+        debug_assert!(self.inner.remove(self.inner.len() - 1) == 0);
+        self.inner.extend_from_slice(slice);
+    }
+
+    /// Extends the `UnixString` with anything that implements [`AsRef`](std::convert::AsRef)<[`OsStr`](std::ffi::OsStr)>.
+    /// This method fails if the given data has a zero byte anywhere but at its end.
+    /// ```rust
+    /// # use unixstring::Result;
+    /// use std::path::Path;
+    ///
+    /// use unixstring::UnixString;
+    /// # fn main() -> Result<()> {
+    /// let mut unix_string = UnixString::new();
+    /// unix_string.push("/home/")?;
+    /// let username = Path::new("user");
+    /// unix_string.push(username)?;
+    ///
+    /// assert_eq!(unix_string.as_str()?, "/home/user");
+    /// # Ok(()) }
+    ///
+    pub fn push(&mut self, value: impl AsRef<OsStr>) -> Result<()> {
+        self.push_bytes(value.as_ref().as_bytes())
+    }
+
+    /// Extends the `UnixString` with the given bytes.
+    /// This method fails if the bytes contain an interior zero byte.
+    /// ```rust
+    /// # use unixstring::Result;
+    /// use std::path::Path;
+    ///
+    /// use unixstring::UnixString;
+    /// # fn main() -> Result<()> {
+    /// let mut unix_string = UnixString::new();
+    ///
+    /// let abc = b"abc".to_vec();
+    /// unix_string.push_bytes(&abc)?;
+    ///
+    /// assert_eq!(unix_string.into_bytes(), abc);
+    /// # Ok(()) }
+    pub fn push_bytes(&mut self, bytes: &[u8]) -> Result<()> {
+        match find_nul_byte(bytes) {
+            Some(nul_pos) if nul_pos + 1 == bytes.len() => {
+                // The given bytes are
+                self.extend_slice(bytes);
+                Ok(())
+            }
+            Some(_nul_pos) => Err(Error::InteriorNulByte),
+            None => {
+                // There was no zero byte at all on the given bytes so we'll
+                // have to manually append the null terminator after appending.
+                self.extend_slice(bytes);
+                self.inner.extend(Some(b'\0'));
+                Ok(())
+            }
+        }
     }
 
     /// Creates a [`UnixString`](UnixString) given a `Vec` of bytes.
@@ -28,9 +94,9 @@ impl UnixString {
     /// ```rust
     /// use unixstring::UnixString;
     ///
-    /// let bytes_without_zero = vec![b'a', b'b', b'c'];
-    /// let bytes_with_nul_terminator = vec![b'a', b'b', b'c', 0];
-    /// let bytes_with_interior_nul = vec![b'a', 0, b'b', b'c'];
+    /// let bytes_without_zero = b"abc".to_vec();
+    /// let bytes_with_nul_terminator = b"abc\0".to_vec();
+    /// let bytes_with_interior_nul = b"a\0bc".to_vec();
     ///
     /// // Valid: no zero bytes were given
     /// assert!(UnixString::from_bytes(bytes_without_zero).is_ok());
@@ -159,8 +225,8 @@ impl UnixString {
     ///
     /// If this byte string is not valid UTF-8, then an error is returned indicating the first invalid byte found and the length of the error.
     /// If instead you wish for a lossy conversion to &str, then use [`to_str_lossy`](UnixString::to_string_lossy).
-    pub fn as_str(&self) -> std::result::Result<&str, std::str::Utf8Error> {
-        std::str::from_utf8(self.inner_without_nul_terminator())
+    pub fn as_str(&self) -> Result<&str> {
+        Ok(std::str::from_utf8(self.inner_without_nul_terminator())?)
     }
 
     /// Converts a `UnixString` into a String if the bytes of the `UnixString` are valid UTF-8.
@@ -172,8 +238,8 @@ impl UnixString {
     /// If you need a `&str` instead of a `String`, consider [`UnixString::as_str`](UnixString::as_str).
     ///
     /// The inverse of this method is into_bytes.
-    pub fn into_string(self) -> std::result::Result<String, FromUtf8Error> {
-        String::from_utf8(self.into_bytes())
+    pub fn into_string(self) -> Result<String> {
+        Ok(String::from_utf8(self.into_bytes())?)
     }
 
     /// Converts a `UnixString` into a `String` without checking that the
