@@ -238,6 +238,21 @@ impl UnixString {
         Ok(std::str::from_utf8(self.inner_without_nul_terminator())?)
     }
 
+    /// This function will check if the inner bytes of this `UnixString` (without its null terminator) consists of valid UTF-8, and if so, returns a `String` reusing the `UnixString`'s buffer.
+    ///
+    /// If the inner bytes contain invalid UTF-8, then a new `String` will be allocated with the invalid bytes replaced with the Unicode replacement codepoint.
+    pub fn into_string_lossy(self) -> String {
+        let bytes = self.into_bytes();
+        match String::from_utf8_lossy(&bytes) {
+            Cow::Owned(new_string) => new_string,
+            Cow::Borrowed(_) => {
+                // Safety: String::from_utf8_lossy returns a reference when the supplied input
+                // is valid UTF-8. Constructing a String unchecked, therefore, is safe.
+                unsafe { String::from_utf8_unchecked(bytes) }
+            }
+        }
+    }
+
     /// Converts a `UnixString` into a String if the bytes of the `UnixString` are valid UTF-8.
     ///
     /// If you are sure that the byte slice is valid UTF-8 and you don’t want to incur the overhead of the validity check, there is an unsafe version of this function, [`UnixString::into_string_unchecked`](UnixString::into_string_unchecked), which has the same behavior but skips the check.
@@ -278,13 +293,11 @@ impl UnixString {
         String::from_utf8_unchecked(self.into_bytes())
     }
 
-    /// Converts this `UnixString` into a String in a lossy manner.
+    /// This function will check if the inner bytes of this `UnixString` (without its null terminator) consists of valid UTF-8, and if so, returns a string slice without copying.
     ///
-    /// If the inner bytes invalid UTF-8, then the invalid bytes are replaced with the Unicode replacement codepoint.
-    ///  
-    /// If the bytes in this `UnixString` are valid UTF-8, no copying is done.
+    /// If the inner bytes contain invalid UTF-8, then a new `String` will be allocated with the invalid bytes replaced with the Unicode replacement codepoint.
     pub fn to_string_lossy(&self) -> Cow<str> {
-        self.as_os_str().to_string_lossy()
+        self.as_c_str().to_string_lossy()
     }
 
     /// Gets the underlying byte view of this `UnixString` *without* the nul terminator.

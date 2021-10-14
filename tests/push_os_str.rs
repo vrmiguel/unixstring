@@ -1,7 +1,5 @@
 use unixstring::UnixString;
 
-
-
 #[test]
 fn push_empty_str() {
     let mut unx = UnixString::new();
@@ -36,7 +34,6 @@ fn push_empty_str() {
     assert_eq!(unx.as_bytes_with_nul(), b"abc\0".to_vec());
     assert_eq!(unx.as_str().unwrap(), "abc");
 }
-
 
 #[test]
 fn push_str() {
