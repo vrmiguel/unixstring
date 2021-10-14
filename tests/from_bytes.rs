@@ -7,11 +7,17 @@ fn from_bytes() {
     let bytes_with_interior_nul = vec![b'a', 0, b'b', b'c'];
 
     // Valid: no zero bytes were given
-    assert!(UnixString::from_bytes(bytes_without_zero).is_ok());
+    let unx = UnixString::from_bytes(bytes_without_zero).unwrap();
+    assert_eq!(unx.as_str().unwrap(), "abc");
+    assert_eq!(unx.as_bytes(), b"abc".to_vec());
+    assert_eq!(unx.as_bytes_with_nul(), b"abc\0".to_vec());
 
     // Still valid: the zero byte is being used as the terminator
-    assert!(UnixString::from_bytes(bytes_with_nul_terminator).is_ok());
+    let unx = UnixString::from_bytes(bytes_with_nul_terminator).unwrap();
+    assert_eq!(unx.as_str().unwrap(), "abc");
+    assert_eq!(unx.as_bytes(), b"abc".to_vec());
+    assert_eq!(unx.as_bytes_with_nul(), b"abc\0".to_vec());
 
     // Invalid: an interior nul byte was found
-    assert!(UnixString::from_bytes(bytes_with_interior_nul).is_err());
+    UnixString::from_bytes(bytes_with_interior_nul).unwrap_err();
 }

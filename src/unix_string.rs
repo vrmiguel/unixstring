@@ -8,7 +8,7 @@ use std::{
 use crate::error::{Error, Result};
 use crate::memchr::find_nul_byte;
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// An FFI-friendly null-terminated byte string.
 #[non_exhaustive]
 pub struct UnixString {
@@ -33,7 +33,8 @@ impl UnixString {
 
     #[inline(always)]
     fn extend_slice(&mut self, slice: &[u8]) {
-        debug_assert!(self.inner.remove(self.inner.len() - 1) == 0);
+        let removed = self.inner.remove(self.inner.len() - 1);
+        debug_assert!(removed == 0);
         self.inner.extend_from_slice(slice);
     }
 
