@@ -31,7 +31,6 @@ impl UnixString {
         Self::default()
     }
 
-    #[inline(always)]
     fn extend_slice(&mut self, slice: &[u8]) {
         let removed = self.inner.remove(self.inner.len() - 1);
         debug_assert!(removed == 0);
@@ -180,7 +179,6 @@ impl UnixString {
         self.as_c_str().as_ptr()
     }
 
-    #[inline(always)]
     fn inner_without_nul_terminator(&self) -> &[u8] {
         &self.inner[0..self.inner.len() - 1]
     }
@@ -236,6 +234,26 @@ impl UnixString {
     /// If instead you wish for a lossy conversion to &str, then use [`to_str_lossy`](UnixString::to_string_lossy).
     pub fn as_str(&self) -> Result<&str> {
         Ok(std::str::from_utf8(self.inner_without_nul_terminator())?)
+    }
+
+    /// Extends a `UnixString` by copying from a raw C string
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe for a number of reasons:
+    /// * The total size of the raw C string must be smaller than `isize::MAX` bytes in memory.
+    /// * There is no guarantee to the validity of `ptr`.
+    /// * There is no guarantee that the memory pointed to by `ptr` contains a
+    ///   valid nul terminator byte at the end of the string.
+    /// * It is not guaranteed that the memory pointed by `ptr` won't change
+    ///   while this operation occurs.
+    ///
+    /// This function uses [`CStr::from_ptr`](std::ffi::CStr::from_ptr) internally, so check it out for more information.
+    ///
+    pub unsafe fn extend_from_ptr(&mut self, ptr: *const libc::c_char) -> Result<()> {
+        let cstr = CStr::from_ptr(ptr);
+        let bytes = cstr.to_bytes();
+        self.push_bytes(bytes)
     }
 
     /// This function will check if the inner bytes of this `UnixString` (without its null terminator) consists of valid UTF-8, and if so, returns a `String` reusing the `UnixString`'s buffer.

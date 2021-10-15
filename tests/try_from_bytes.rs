@@ -1,8 +1,10 @@
+use std::convert::TryFrom;
+
 use unixstring::UnixString;
 
 #[test]
 fn empty_vec() {
-    let empty = UnixString::from_bytes(vec![]).unwrap();
+    let empty = UnixString::try_from(vec![]).unwrap();
 
     assert_eq!(empty.as_str().unwrap(), "");
 
@@ -13,7 +15,7 @@ fn empty_vec() {
 
 #[test]
 fn size_one_vec() {
-    let one = UnixString::from_bytes(vec![b'1']).unwrap();
+    let one = UnixString::try_from(vec![b'1']).unwrap();
 
     assert_eq!(one.as_str().unwrap(), "1");
 
@@ -24,7 +26,7 @@ fn size_one_vec() {
 
 #[test]
 fn valid_bytes() {
-    let abc = UnixString::from_bytes(b"abc".to_vec()).unwrap();
+    let abc = UnixString::try_from(b"abc".to_vec()).unwrap();
 
     assert_eq!(abc.as_str().unwrap(), "abc");
 
@@ -35,7 +37,7 @@ fn valid_bytes() {
 
 #[test]
 fn invalid_bytes_fails() {
-    let abc = UnixString::from_bytes(b"a\0bc".to_vec());
+    let abc = UnixString::try_from(b"a\0bc".to_vec());
 
     assert!(abc.is_err())
 }
