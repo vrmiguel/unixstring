@@ -27,6 +27,7 @@
 //! | `&[u8]`  |     `UnixString::as_bytes`      | Returns the bytes of the `UnixString` without the null terminator |
 //! | `&[u8]`  | `UnixString::as_bytes_with_nul` |  Returns the bytes of the `UnixString` with the null terminator   |
 //! | `&OsStr` |     `UnixString::as_os_str`     |                 Available through `AsRef` as well                 |
+//! | `* const c_char` | `UnixString::as_ptr`    |                                                                   |
 //!
 //! ## Creating an UnixString
 //!
@@ -37,6 +38,7 @@
 //! |  `String`  | Fails if contains an interior zero byte |  TryFrom   |  `UnixString::from_string`   |
 //! | `Vec<u8>`  | Fails if contains an interior zero byte |  TryFrom   |   `UnixString::from_bytes`   |
 //! | `OsString` | Fails if contains an interior zero byte |  TryFrom   | `UnixString::from_os_string` |
+//! | `* const c_char` | Unsafe, see the docs for more info|  None      | `UnixString::from_ptr`       |
 //!
 //! ## Converting from an UnixString
 //!
