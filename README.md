@@ -37,7 +37,7 @@ A `CString` also does not have direct reference conversions to anything but `&[u
 | `PathBuf`  | Fails if contains an interior zero byte |  TryFrom   |  `UnixString::from_pathbuf`  |
 |  `String`  | Fails if contains an interior zero byte |  TryFrom   |  `UnixString::from_string`   |
 | `Vec<u8>`  | Fails if contains an interior zero byte |  TryFrom   |   `UnixString::from_bytes`   |
-| `OsString` | Fails if contains an interior zero byte |    Text    | `UnixString::from_os_string` |
+| `OsString` | Fails if contains an interior zero byte |  TryFrom   | `UnixString::from_os_string` |
 
 ## Converting from an UnixString
 
@@ -46,7 +46,7 @@ A `CString` also does not have direct reference conversions to anything but `&[u
 |:----------:|:-----------------------------------:|:----------------------------------------------------------------------:|
 | `CString`  |     `UnixString::into_cstring`      |                                                                        |
 | `PathBuf`  |     `UnixString::into_pathbuf`      |                                                                        |
-| `OsString` |    `UnixString::from_os_string`     |                                                                        |
+| `OsString` |    `UnixString::into_os_string`     |                                                                        |
 |  `String`  |      `UnixString::into_string`      |         Fails if the `UnixString`'s bytes are not valid UTF-8          |
 |  `String`  |   `UnixString::into_string_lossy`   |                                                                        |
 |  `String`  |    `UnixString::to_string_lossy`    |         Non-moving version of `UnixString::into_string_lossy`          |
