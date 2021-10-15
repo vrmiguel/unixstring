@@ -5,6 +5,17 @@
 
 ## Why?
 
+`UnixString` aims to be useful in any scenario where you'd like to use FFI (specially with C) on Unix systems.
+If you have a `PathBuf`, for example, you can send that data to a `libc` function, such as `stat`, but you'd have to first allocate a `CString` (or something analogous) to do so.
+
+The same is true with `OsString` and `String` because these three types are allowed to have internal zero bytes and are not null-terminated.
+
+
+A `UnixString` is very close to what a `CString` is but with increased flexibility and usability. A `CString` cannot be changed or increased after instantited, while `UnixString` is growable through its `push` and `push_bytes` methods, somewhat similar to `OsString`.
+
+A `CString` also does not have direct reference conversions to anything but `&[u8]` or `&CStr`, while `UnixString` has those and more (described below).
+
+
 
 
 ## Obtaining references from an UnixString
