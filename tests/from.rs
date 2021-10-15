@@ -1,5 +1,4 @@
 use std::{
-    convert::TryFrom,
     ffi::{CString, OsString},
     path::PathBuf,
 };

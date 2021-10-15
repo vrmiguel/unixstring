@@ -3,6 +3,10 @@
 
 `UnixString` is an FFI-friendly null-terminated byte string that may be constructed from a [`String`](https://doc.rust-lang.org/std/string/struct.String.html), a [`CString`](https://doc.rust-lang.org/std/ffi/struct.CString.html), a [`PathBuf`](https://doc.rust-lang.org/std/path/struct.PathBuf.html), an [`OsString`](https://doc.rust-lang.org/std/ffi/struct.OsString.html) or a collection of bytes.
 
+
+An [`UnixString`](UnixString) can then be converted into a slice of [`CStr`](https://doc.rust-lang.org/std/ffi/struct.CStr.html), [`Path`](https://doc.rust-lang.org/std/path/struct.Path.html) or [`OsStr`](https://doc.rust-lang.org/std/ffi/struct.OsStr.html) in infallible and zero-cost operations.
+
+
 ## Why?
 
 `UnixString` aims to be useful in any scenario where you'd like to use FFI (specially with C) on Unix systems.
@@ -14,9 +18,6 @@ The same is true with `OsString` and `String` because these three types are allo
 A `UnixString` is very close to what a `CString` is but with increased flexibility and usability. A `CString` cannot be changed or increased after instantited, while `UnixString` is growable through its `push` and `push_bytes` methods, somewhat similar to `OsString`.
 
 A `CString` also does not have direct reference conversions to anything but `&[u8]` or `&CStr`, while `UnixString` has those and more (described below).
-
-
-
 
 ## Obtaining references from an UnixString
 
@@ -55,9 +56,6 @@ A `CString` also does not have direct reference conversions to anything but `&[u
 | `Vec<u8>`  |  `UnixString::into_bytes_with_nul`  |     Returns the bytes of the `UnixString` with the null terminator     |
 
 All of the above are also available through `.into()`.
-
-
-An [`UnixString`](UnixString) can then be converted into a slice of [`CStr`](https://doc.rust-lang.org/std/ffi/struct.CStr.html), [`Path`](https://doc.rust-lang.org/std/path/struct.Path.html) or [`OsStr`](https://doc.rust-lang.org/std/ffi/struct.OsStr.html) in infallible and zero-cost operations.
 
 ## Examples
 
