@@ -1,11 +1,81 @@
 # unixstring [![codecov](https://codecov.io/gh/vrmiguel/unixstring/branch/master/graph/badge.svg?token=6rvhsF5Eiq)](https://codecov.io/gh/vrmiguel/unixstring) ![Crates.io](https://img.shields.io/crates/v/unixstring) [![Docs](https://img.shields.io/badge/docs.rs-unixstring-green)](https://docs.rs/unixstring/)
 
 
-`UnixString` is an FFI-friendly null-terminated byte string that may be constructed from a [`String`], a [`CString`](https://doc.rust-lang.org/std/ffi/struct.CString.html), a [`PathBuf`](https://doc.rust-lang.org/std/path/struct.PathBuf.html), an [`OsString`](https://doc.rust-lang.org/std/ffi/struct.OsString.html) or a collection of bytes.
+`UnixString` is an FFI-friendly null-terminated byte string that may be constructed from a [`String`](https://doc.rust-lang.org/std/string/struct.String.html), a [`CString`](https://doc.rust-lang.org/std/ffi/struct.CString.html), a [`PathBuf`](https://doc.rust-lang.org/std/path/struct.PathBuf.html), an [`OsString`](https://doc.rust-lang.org/std/ffi/struct.OsString.html) or a collection of bytes.
+
+## Why?
+
+
+
+## Obtaining references from an UnixString
+
+|   Into   |            Function             |                               Notes                               |
+|:--------:|:-------------------------------:|:-----------------------------------------------------------------:|
+| `&CStr`  |     `UnixString::as_c_str`      |                 Available through `AsRef` as well                 |
+| `&Path`  |      `UnixString::as_path`      |                 Available through `AsRef` as well                 |
+|  `&str`  |      `UnixString::as_str`       |     Fails if the bytes of the `UnixString` aren't valid UTF-8     |
+| `&[u8]`  |     `UnixString::as_bytes`      | Returns the bytes of the `UnixString` without the null terminator |
+| `&[u8]`  | `UnixString::as_bytes_with_nul` |  Returns the bytes of the `UnixString` with the null terminator   |
+| `&OsStr` |     `UnixString::as_os_str`     |                 Available through `AsRef` as well                 |
+
+## Creating an UnixString
+
+|    From    |            Potential failure            | Trait impl |           Function           |
+|:----------:|:---------------------------------------:|:----------:|:----------------------------:|
+| `CString`  |               Infallible                |    From    |  `UnixString::from_cstring`  |
+| `PathBuf`  | Fails if contains an interior zero byte |  TryFrom   |  `UnixString::from_pathbuf`  |
+|  `String`  | Fails if contains an interior zero byte |  TryFrom   |  `UnixString::from_string`   |
+| `Vec<u8>`  | Fails if contains an interior zero byte |  TryFrom   |   `UnixString::from_bytes`   |
+| `OsString` | Fails if contains an interior zero byte |    Text    | `UnixString::from_os_string` |
+
+## Converting from an UnixString
+
+
+|    Into    |              Function               |                                 Notes                                  |
+|:----------:|:-----------------------------------:|:----------------------------------------------------------------------:|
+| `CString`  |     `UnixString::into_cstring`      |                                                                        |
+| `PathBuf`  |     `UnixString::into_pathbuf`      |                                                                        |
+| `OsString` |    `UnixString::from_os_string`     |                                                                        |
+|  `String`  |      `UnixString::into_string`      |         Fails if the `UnixString`'s bytes are not valid UTF-8          |
+|  `String`  |   `UnixString::into_string_lossy`   |                                                                        |
+|  `String`  |    `UnixString::to_string_lossy`    |         Non-moving version of `UnixString::into_string_lossy`          |
+|  `String`  | `UnixString::into_string_unchecked` | Unsafe: creates a String without checking if the bytes are valid UTF-8 |
+| `Vec<u8>`  |      `UnixString::into_bytes`       |   Returns the bytes of the `UnixString` without the null terminator    |
+| `Vec<u8>`  |  `UnixString::into_bytes_with_nul`  |     Returns the bytes of the `UnixString` with the null terminator     |
+
+All of the above are also available through `.into()`.
+
 
 An [`UnixString`](UnixString) can then be converted into a slice of [`CStr`](https://doc.rust-lang.org/std/ffi/struct.CStr.html), [`Path`](https://doc.rust-lang.org/std/path/struct.Path.html) or [`OsStr`](https://doc.rust-lang.org/std/ffi/struct.OsStr.html) in infallible and zero-cost operations.
 
-## Example
+## Examples
+
+### Creating an UnixString with bytes received through FFI
+
+```rust=
+use libc::{c_char, getcwd};
+use unixstring::UnixString;
+
+fn main() {
+    const PATH_SIZ: usize = 1024;
+    let mut buf: [c_char; 1024] = [0; 1024];
+
+    let ptr = &mut buf as *mut c_char;
+
+    unsafe { getcwd(ptr, PATH_SIZ) };
+
+    if ptr.is_null() {
+        panic!("getcwd failed");
+    }
+
+    let unix_string = unsafe { UnixString::from_ptr(ptr as *const c_char) };
+
+    assert_eq!(unix_string.as_path(), std::env::current_dir().unwrap())
+}
+
+```
+
+### Using an UnixString to send bytes through FFI
 
 ```rust
 use std::{convert::TryFrom, env};
