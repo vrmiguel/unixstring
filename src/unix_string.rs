@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    convert::TryInto,
     ffi::{CStr, CString, OsStr, OsString},
     os::unix::prelude::OsStrExt,
     path::{Path, PathBuf},
@@ -387,6 +388,45 @@ impl UnixString {
         let mut bytes = self.inner;
         bytes.remove(bytes.len() - 1);
         bytes
+    }
+
+    /// Converts a `CString` into an `UnixString`.
+    ///
+    /// This operation is zero-cost and does not fail.
+    ///
+    /// This operation fails if the `CString` has any interior zero byte but a zero byte at the last position is acceptable.
+    pub fn from_cstring(cstring: CString) -> Self {
+        cstring.into()
+    }
+
+    /// Converts a `PathBuf` into an `UnixString`.
+    ///
+    /// A validation will be done to ensure that the `PathBuf` has no interior zero bytes.
+    /// Other than that, this operation is zero-cost.
+    ///
+    /// This operation fails if the `PathBuf` has any interior zero byte but a zero byte at the last position is acceptable.
+    pub fn from_pathbuf(pathbuf: PathBuf) -> Result<Self> {
+        pathbuf.try_into()
+    }
+
+    /// Converts a `String` into an `UnixString`.
+    ///
+    /// A validation will be done to ensure that the `String` has no interior zero bytes.
+    /// Other than that, this operation is zero-cost.
+    ///
+    /// This operation fails if the `String` has any interior zero byte but a zero byte at the last position is acceptable.
+    pub fn from_string(string: String) -> Result<Self> {
+        string.try_into()
+    }
+
+    /// Converts an `OsString` into an `UnixString`.
+    ///
+    /// A validation will be done to ensure that the `OsString` has no interior zero bytes.
+    /// Other than that, this operation is zero-cost.
+    ///
+    /// This operation fails if the `OsString` has any interior zero byte but a zero byte at the last position is acceptable.
+    pub fn from_os_string(os_string: OsString) -> Result<Self> {
+        os_string.try_into()
     }
 }
 
