@@ -61,6 +61,7 @@ mod as_ref;
 mod error;
 mod from;
 mod memchr;
+mod partial_eq;
 mod try_from;
 mod unix_string;
 

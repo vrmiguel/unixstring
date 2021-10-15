@@ -428,6 +428,32 @@ impl UnixString {
     pub fn from_os_string(os_string: OsString) -> Result<Self> {
         os_string.try_into()
     }
+
+    /// Checks if the `UnixString` starts with the given slice.
+    /// 
+    /// ```
+    /// use unixstring::UnixString;
+    /// # use unixstring::Result;
+    /// # fn main() -> Result<()> {
+    /// let mut unix_string = UnixString::new();
+    /// unix_string.push("/home/")?;
+    /// unix_string.push("user")?;
+    ///
+    /// assert!(unix_string.starts_with("/home"));
+    /// assert!(unix_string.starts_with("/home/user"));
+    /// assert!(!unix_string.starts_with("/home/user/"));
+    /// assert!(!unix_string.starts_with("/home/other-user"));
+    ///
+    ///
+    /// # Ok(()) }
+    /// ```
+    pub fn starts_with(&self, rhs: impl AsRef<OsStr>) -> bool {
+        let rhs = rhs.as_ref().as_bytes();
+        match self.as_bytes().get(0..rhs.len()) {
+            Some(subslice) => subslice == rhs,
+            None => false,
+        }
+    }
 }
 
 impl From<CString> for UnixString {
