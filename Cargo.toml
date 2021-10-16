@@ -11,5 +11,4 @@ repository = "https://github.com/vrmiguel/unixstring"
 license = "MIT"
 
 [dependencies]
-thiserror = "1.0.29"
 libc      = "0.2.103"

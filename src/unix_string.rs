@@ -430,7 +430,7 @@ impl UnixString {
     }
 
     /// Checks if the `UnixString` starts with the given slice.
-    /// 
+    ///
     /// ```
     /// use unixstring::UnixString;
     /// # use unixstring::Result;
