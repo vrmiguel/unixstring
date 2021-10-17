@@ -21,7 +21,7 @@ fn empty() {
 
     let empty = String::from("");
     let unix_string = UnixString::from_string(empty.clone()).unwrap();
-    assert_eq!(empty.as_str(), unix_string.as_str().unwrap());
+    assert_eq!(empty.as_str(), unix_string.to_str().unwrap());
 }
 
 #[test]
@@ -40,7 +40,7 @@ fn size_one() {
 
     let one = String::from("1");
     let unix_string = UnixString::from_string(one.clone()).unwrap();
-    assert_eq!(one.as_str(), unix_string.as_str().unwrap());
+    assert_eq!(one.as_str(), unix_string.to_str().unwrap());
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn valid_bytes() {
 
     let abc = String::from("abc");
     let unix_string = UnixString::from_string(abc.clone()).unwrap();
-    assert_eq!(abc.as_str(), unix_string.as_str().unwrap());
+    assert_eq!(abc.as_str(), unix_string.to_str().unwrap());
 }
 
 #[test]

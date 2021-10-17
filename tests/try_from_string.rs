@@ -19,7 +19,7 @@ fn empty_string() {
     let empty = String::from("");
     let unix_string = UnixString::try_from(empty.clone()).unwrap();
 
-    assert_eq!(empty.as_str(), unix_string.as_str().unwrap())
+    assert_eq!(empty.as_str(), unix_string.to_str().unwrap())
 }
 
 #[test]
@@ -27,7 +27,7 @@ fn size_one_string() {
     let one = String::from("1");
     let unix_string = UnixString::try_from(one.clone()).unwrap();
 
-    assert_eq!(one.as_str(), unix_string.as_str().unwrap())
+    assert_eq!(one.as_str(), unix_string.to_str().unwrap())
 }
 
 #[test]
@@ -35,5 +35,5 @@ fn string() {
     let logs = String::from("/var/log/journal");
     let unix_string = UnixString::try_from(logs.clone()).unwrap();
 
-    assert_eq!(logs.as_str(), unix_string.as_str().unwrap())
+    assert_eq!(logs.as_str(), unix_string.to_str().unwrap())
 }

@@ -6,7 +6,7 @@ use unixstring::UnixString;
 fn empty_vec() {
     let empty = UnixString::try_from(vec![]).unwrap();
 
-    assert_eq!(empty.as_str().unwrap(), "");
+    assert_eq!(empty.to_str().unwrap(), "");
 
     assert_eq!(empty.as_bytes(), &[]);
 
@@ -17,7 +17,7 @@ fn empty_vec() {
 fn size_one_vec() {
     let one = UnixString::try_from(vec![b'1']).unwrap();
 
-    assert_eq!(one.as_str().unwrap(), "1");
+    assert_eq!(one.to_str().unwrap(), "1");
 
     assert_eq!(one.as_bytes(), &[b'1']);
 
@@ -28,7 +28,7 @@ fn size_one_vec() {
 fn valid_bytes() {
     let abc = UnixString::try_from(b"abc".to_vec()).unwrap();
 
-    assert_eq!(abc.as_str().unwrap(), "abc");
+    assert_eq!(abc.to_str().unwrap(), "abc");
 
     assert_eq!(abc.as_bytes(), b"abc".to_vec().as_slice());
 

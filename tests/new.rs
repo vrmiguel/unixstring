@@ -3,7 +3,7 @@ use std::{ffi::OsStr, path::Path};
 use unixstring::UnixString;
 
 fn check_empty(empty: UnixString) {
-    assert_eq!(empty.as_str().ok(), Some(""));
+    assert_eq!(empty.to_str().ok(), Some(""));
     assert_eq!(empty.as_os_str(), OsStr::new(""));
     assert_eq!(empty.as_path(), Path::new(""));
     assert_eq!(empty.as_bytes(), &[]);
