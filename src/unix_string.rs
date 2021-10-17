@@ -483,6 +483,21 @@ impl UnixString {
             None => false,
         }
     }
+
+    /// Returns an unsafe mutable pointer to the `UnixString`'s buffer.
+    ///
+    /// # Safety
+    /// 
+    /// * The caller must ensure that the `UnixString`, if modified, 
+    /// * The caller must ensure that the `UnixString` outlives the pointer this
+    /// function returns, or else it ends up pointing to garbage.
+    /// * Modifying the vector may cause its buffer to be reallocated,
+    /// which would also make any pointers to it invalid.
+    /// 
+    /// See also: [`Vec::as_mut_ptr`](std::vec::Vec::as_mut_ptr)
+    pub unsafe fn as_mut_ptr(&mut self) -> * mut libc::c_char {
+        self.inner.as_mut_ptr() as * mut libc::c_char
+    }
 }
 
 impl From<CString> for UnixString {
