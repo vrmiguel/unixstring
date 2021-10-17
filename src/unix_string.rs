@@ -32,6 +32,35 @@ impl UnixString {
         Self::default()
     }
 
+    /// Validates if this `UnixString` has a correct internal representation: with a zero byte only at the end.
+    /// 
+    /// All of the safe functions in this crate *must* maintain the `UnixString` in a valid state.
+    /// 
+    /// This method is particularly useful to guarantee that a `UnixString` remains valid after being possibly modified through [`UnixString::as_mut_ptr`](UnixString::as_mut_ptr),
+    /// or making sure that a `UnixString` created from [`UnixString::from_ptr`](UnixString::from_ptr) is correct.
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// # use unixstring::Result;
+    /// # fn main() -> Result<()> {
+    /// 
+    /// let mut unix_string = UnixString::new();
+    /// unix_string.push("hello")?;
+    /// unix_string.push("world")?;
+    /// 
+    /// assert!(unix_string.validate().is_ok());
+    /// 
+    /// # Ok(()) }
+    /// ```
+    pub fn validate(&self) -> Result<()> {
+        let bytes = &*self.inner;
+        match find_nul_byte(bytes) {
+            Some(nul_pos) if nul_pos + 1 == bytes.len() => Ok(()),
+            Some(_nul_pos) => Err(Error::InteriorNulByte),
+            None => Err(Error::MissingNulTerminator)
+        }
+    }
+
     fn extend_slice(&mut self, slice: &[u8]) {
         let removed = self.inner.remove(self.inner.len() - 1);
         debug_assert!(removed == 0);
