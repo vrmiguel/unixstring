@@ -82,7 +82,7 @@ impl UnixString {
     /// let username = Path::new("user");
     /// unix_string.push(username)?;
     ///
-    /// assert_eq!(unix_string.as_str()?, "/home/user");
+    /// assert_eq!(unix_string.to_str()?, "/home/user");
     /// # Ok(()) }
     ///
     pub fn push(&mut self, value: impl AsRef<OsStr>) -> Result<()> {
@@ -497,6 +497,90 @@ impl UnixString {
     /// See also: [`Vec::as_mut_ptr`](std::vec::Vec::as_mut_ptr)
     pub unsafe fn as_mut_ptr(&mut self) -> *mut libc::c_char {
         self.inner.as_mut_ptr() as *mut libc::c_char
+    }
+
+    /// Returns the number of bytes this `UnixString` can hold without
+    /// reallocating.
+    /// 
+    /// Do note that the nul terminator byte *is* included in this count.
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// assert_eq!(
+    ///     // Capacity to hold 49 bytes + one byte for the nul terminator
+    ///     UnixString::with_capacity(49).capacity(),
+    ///     50
+    /// );
+    pub fn capacity(&self) -> usize {
+        self.inner.capacity()
+    }
+
+    /// Returns the length of the underlying byte string *without* considering the nul terminator.
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let name = "John Doe";
+    /// let unx = UnixString::from_string(name.to_string()).unwrap();
+    /// 
+    /// assert_eq!(
+    ///     name.len(),
+    ///     unx.len()
+    /// );
+    /// 
+    /// ```
+    pub fn len(&self) -> usize {
+        self.inner.len().wrapping_sub(1)
+    }
+
+    /// Returns the length of the underlying byte string *considering* the nul terminator.
+    ///
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let name = b"John Doe\0";
+    /// let unx = UnixString::from_bytes(name.to_vec()).unwrap();
+    /// 
+    /// assert_eq!(
+    ///     name.len(),
+    ///     unx.len_with_nul()
+    /// );
+    /// 
+    /// assert_eq!(
+    ///     name.len(),
+    ///     unx.len() + 1
+    /// );
+    /// 
+    /// ```
+    pub fn len_with_nul(&self) -> usize {
+        self.inner.len()
+    }
+
+    /// Checks if `self` represents an empty byte string.
+    /// 
+    /// Note that `self` will never really be empty since a `UnixString` always allocates at least one byte
+    /// to hold its nul terminator.
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// # use unixstring::Result;
+    /// # fn main() -> Result<()> {
+    /// 
+    /// let mut unx = UnixString::new();
+    /// 
+    /// assert!(unx.is_empty());
+    /// 
+    /// unx.push("123321")?; 
+    /// 
+    /// assert_eq!(unx.is_empty(), false);
+    /// 
+    /// # Ok(()) }
+    /// 
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        matches!(&*self.inner, &[0])
     }
 }
 

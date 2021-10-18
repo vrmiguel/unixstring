@@ -19,7 +19,8 @@ fn empty_string() {
     let empty = String::from("");
     let unix_string = UnixString::try_from(empty.clone()).unwrap();
 
-    assert_eq!(empty.as_str(), unix_string.to_str().unwrap())
+    assert_eq!(empty.as_str(), unix_string.to_str().unwrap());
+    assert!(unix_string.is_empty())
 }
 
 #[test]
