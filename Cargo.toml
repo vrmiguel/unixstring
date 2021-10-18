@@ -1,6 +1,6 @@
 [package]
 name = "unixstring"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2018"
 authors = ["Vinícius Rodrigues Miguel <vrmiguel99@gmail.com>"]
 readme = "README.md"

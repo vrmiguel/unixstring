@@ -61,6 +61,8 @@ impl UnixString {
         }
     }
 
+    // Removes the existing nul terminator and then extends `self` with the given bytes.
+    // Assumes that the given bytes have a nul terminator
     fn extend_slice(&mut self, slice: &[u8]) {
         let removed = self.inner.remove(self.inner.len() - 1);
         debug_assert!(removed == 0);
@@ -109,7 +111,7 @@ impl UnixString {
     pub fn push_bytes(&mut self, bytes: &[u8]) -> Result<()> {
         match find_nul_byte(bytes) {
             Some(nul_pos) if nul_pos + 1 == bytes.len() => {
-                // The given bytes are
+                // The given bytes already have a nul terminator
                 self.extend_slice(bytes);
                 Ok(())
             }
@@ -307,7 +309,7 @@ impl UnixString {
     ///
     /// If the validity check passes, the resulting `String` will reuse the allocation of the `UnixString`'s inner buffer and no copy will be done.
     ///
-    /// If you need a `&str` instead of a `String`, consider [`UnixString::as_str`](UnixString::as_str).
+    /// If you need a `&str` instead of a `String`, consider [`UnixString::as_str`](UnixString::to_str).
     pub fn into_string(self) -> Result<String> {
         Ok(String::from_utf8(self.into_bytes())?)
     }
@@ -391,6 +393,7 @@ impl UnixString {
     }
 
     /// Gets the underlying byte view of this `UnixString` *including* the nul terminator.
+    /// 
     /// ```rust
     /// use unixstring::UnixString;
     ///
@@ -488,15 +491,67 @@ impl UnixString {
     ///
     /// # Safety
     ///
-    /// * The caller must ensure that the `UnixString`, if modified,
+    /// * The caller must ensure that the `UnixString` remains valid after modification.
     /// * The caller must ensure that the `UnixString` outlives the pointer this
     /// function returns, or else it ends up pointing to garbage.
     /// * Modifying the vector may cause its buffer to be reallocated,
     /// which would also make any pointers to it invalid.
     ///
+    /// If you want to ensure that your `UnixString` is still valid after modified through [`as_mut_ptr`](UnixString::as_mut_ptr),
+    /// check out [`UnixString::validate`](UnixString::validate).
+    /// 
     /// See also: [`Vec::as_mut_ptr`](std::vec::Vec::as_mut_ptr)
-    pub unsafe fn as_mut_ptr(&mut self) -> *mut libc::c_char {
-        self.inner.as_mut_ptr() as *mut libc::c_char
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let mut unx = UnixString::with_capacity(12);
+    ///
+    /// let ptr = unx.as_mut_ptr();
+    /// 
+    /// // This loop mocks a potential FFI call that uses this raw pointer
+    /// for (idx, &byte) in b"hello world\0".iter().enumerate() {
+    ///     unsafe {
+    ///         ptr.add(idx).write(byte as _);
+    ///     }
+    /// }
+    ///
+    /// // Once you've written your data, you must set the 
+    /// # // TODO: investigate a potential `truncate` function
+    /// unsafe {
+    ///     unx.set_len(12);
+    /// }
+    /// 
+    /// // The internal representation was not broken
+    /// assert!(unx.validate().is_ok());
+    /// 
+    /// assert!(matches!(unx.to_str(), Ok("hello world")));
+    /// 
+    /// ```
+    pub fn as_mut_ptr(&mut self) -> *mut libc::c_char {
+        // self.inner.as_mut_ptr() as *mut libc::c_char
+        self.inner.as_mut_ptr() as *mut _
+    }
+
+    /// Forces the length of the inner buffer of `self` to `new_len`.
+    ///
+    /// This method can be useful for situations in which the `UnixString` is serving as a buffer for other code, particularly over FFI.
+    /// 
+    /// See [`UnixString::as_mut_ptr`](UnixString::as_mut_ptr) for an example usage of this function.
+    /// 
+    /// 
+    /// # Safety
+    ///
+    /// - `new_len` must be less than or equal to [`capacity()`].
+    /// - The elements at `old_len..new_len` must be initialized.
+    ///
+    /// [`capacity()`]: UnixString::capacity
+    /// 
+    /// See also: [`Vec::set_len`](Vec::set_len).
+    pub unsafe fn set_len(&mut self, new_len: usize) {
+        self.inner.set_len(new_len)
     }
 
     /// Returns the number of bytes this `UnixString` can hold without
