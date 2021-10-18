@@ -7,7 +7,8 @@ fn empty_pathbuf() {
     let empty = PathBuf::from("");
     let unix_string = UnixString::try_from(empty.clone()).unwrap();
 
-    assert_eq!(empty.as_path(), unix_string.as_path())
+    assert_eq!(empty.as_path(), unix_string.as_path());
+    assert!(unix_string.is_empty());
 }
 
 #[test]

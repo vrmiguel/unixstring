@@ -32,6 +32,35 @@ impl UnixString {
         Self::default()
     }
 
+    /// Validates if this `UnixString` has a correct internal representation: with a zero byte only at the end.
+    ///
+    /// All of the safe functions in this crate *must* maintain the `UnixString` in a valid state.
+    ///
+    /// This method is particularly useful to guarantee that a `UnixString` remains valid after being possibly modified through [`UnixString::as_mut_ptr`](UnixString::as_mut_ptr),
+    /// or making sure that a `UnixString` created from [`UnixString::from_ptr`](UnixString::from_ptr) is correct.
+    ///
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// # use unixstring::Result;
+    /// # fn main() -> Result<()> {
+    ///
+    /// let mut unix_string = UnixString::new();
+    /// unix_string.push("hello")?;
+    /// unix_string.push("world")?;
+    ///
+    /// assert!(unix_string.validate().is_ok());
+    ///
+    /// # Ok(()) }
+    /// ```
+    pub fn validate(&self) -> Result<()> {
+        let bytes = &*self.inner;
+        match find_nul_byte(bytes) {
+            Some(nul_pos) if nul_pos + 1 == bytes.len() => Ok(()),
+            Some(_nul_pos) => Err(Error::InteriorNulByte),
+            None => Err(Error::MissingNulTerminator),
+        }
+    }
+
     fn extend_slice(&mut self, slice: &[u8]) {
         let removed = self.inner.remove(self.inner.len() - 1);
         debug_assert!(removed == 0);
@@ -53,7 +82,7 @@ impl UnixString {
     /// let username = Path::new("user");
     /// unix_string.push(username)?;
     ///
-    /// assert_eq!(unix_string.as_str()?, "/home/user");
+    /// assert_eq!(unix_string.to_str()?, "/home/user");
     /// # Ok(()) }
     ///
     pub fn push(&mut self, value: impl AsRef<OsStr>) -> Result<()> {
@@ -233,7 +262,7 @@ impl UnixString {
     ///
     /// If this byte string is not valid UTF-8, then an error is returned indicating the first invalid byte found and the length of the error.
     /// If instead you wish for a lossy conversion to &str, then use [`to_str_lossy`](UnixString::to_string_lossy).
-    pub fn as_str(&self) -> Result<&str> {
+    pub fn to_str(&self) -> Result<&str> {
         Ok(std::str::from_utf8(self.inner_without_nul_terminator())?)
     }
 
@@ -453,6 +482,105 @@ impl UnixString {
             Some(subslice) => subslice == rhs,
             None => false,
         }
+    }
+
+    /// Returns an unsafe mutable pointer to the `UnixString`'s buffer.
+    ///
+    /// # Safety
+    ///
+    /// * The caller must ensure that the `UnixString`, if modified,
+    /// * The caller must ensure that the `UnixString` outlives the pointer this
+    /// function returns, or else it ends up pointing to garbage.
+    /// * Modifying the vector may cause its buffer to be reallocated,
+    /// which would also make any pointers to it invalid.
+    ///
+    /// See also: [`Vec::as_mut_ptr`](std::vec::Vec::as_mut_ptr)
+    pub unsafe fn as_mut_ptr(&mut self) -> *mut libc::c_char {
+        self.inner.as_mut_ptr() as *mut libc::c_char
+    }
+
+    /// Returns the number of bytes this `UnixString` can hold without
+    /// reallocating.
+    /// 
+    /// Do note that the nul terminator byte *is* included in this count.
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// assert_eq!(
+    ///     // Capacity to hold 49 bytes + one byte for the nul terminator
+    ///     UnixString::with_capacity(49).capacity(),
+    ///     50
+    /// );
+    pub fn capacity(&self) -> usize {
+        self.inner.capacity()
+    }
+
+    /// Returns the length of the underlying byte string *without* considering the nul terminator.
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let name = "John Doe";
+    /// let unx = UnixString::from_string(name.to_string()).unwrap();
+    /// 
+    /// assert_eq!(
+    ///     name.len(),
+    ///     unx.len()
+    /// );
+    /// 
+    /// ```
+    pub fn len(&self) -> usize {
+        self.inner.len().wrapping_sub(1)
+    }
+
+    /// Returns the length of the underlying byte string *considering* the nul terminator.
+    ///
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// let name = b"John Doe\0";
+    /// let unx = UnixString::from_bytes(name.to_vec()).unwrap();
+    /// 
+    /// assert_eq!(
+    ///     name.len(),
+    ///     unx.len_with_nul()
+    /// );
+    /// 
+    /// assert_eq!(
+    ///     name.len(),
+    ///     unx.len() + 1
+    /// );
+    /// 
+    /// ```
+    pub fn len_with_nul(&self) -> usize {
+        self.inner.len()
+    }
+
+    /// Checks if `self` represents an empty byte string.
+    /// 
+    /// Note that `self` will never really be empty since a `UnixString` always allocates at least one byte
+    /// to hold its nul terminator.
+    /// 
+    /// ```rust
+    /// use unixstring::UnixString;
+    /// 
+    /// # use unixstring::Result;
+    /// # fn main() -> Result<()> {
+    /// 
+    /// let mut unx = UnixString::new();
+    /// 
+    /// assert!(unx.is_empty());
+    /// 
+    /// unx.push("123321")?; 
+    /// 
+    /// assert_eq!(unx.is_empty(), false);
+    /// 
+    /// # Ok(()) }
+    /// 
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        matches!(&*self.inner, &[0])
     }
 }
 

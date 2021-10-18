@@ -4,7 +4,7 @@ use unixstring::UnixString;
 fn empty_vec() {
     let empty = UnixString::from_bytes(vec![]).unwrap();
 
-    assert_eq!(empty.as_str().unwrap(), "");
+    assert_eq!(empty.to_str().unwrap(), "");
 
     assert_eq!(empty.as_bytes(), &[]);
 
@@ -15,7 +15,7 @@ fn empty_vec() {
 fn size_one_vec() {
     let one = UnixString::from_bytes(vec![b'1']).unwrap();
 
-    assert_eq!(one.as_str().unwrap(), "1");
+    assert_eq!(one.to_str().unwrap(), "1");
 
     assert_eq!(one.as_bytes(), &[b'1']);
 
@@ -26,7 +26,7 @@ fn size_one_vec() {
 fn valid_bytes() {
     let abc = UnixString::from_bytes(b"abc".to_vec()).unwrap();
 
-    assert_eq!(abc.as_str().unwrap(), "abc");
+    assert_eq!(abc.to_str().unwrap(), "abc");
 
     assert_eq!(abc.as_bytes(), b"abc".to_vec().as_slice());
 
@@ -48,13 +48,13 @@ fn from_bytes() {
 
     // Valid: no zero bytes were given
     let unx = UnixString::from_bytes(bytes_without_zero).unwrap();
-    assert_eq!(unx.as_str().unwrap(), "abc");
+    assert_eq!(unx.to_str().unwrap(), "abc");
     assert_eq!(unx.as_bytes(), b"abc".to_vec());
     assert_eq!(unx.as_bytes_with_nul(), b"abc\0".to_vec());
 
     // Still valid: the zero byte is being used as the terminator
     let unx = UnixString::from_bytes(bytes_with_nul_terminator).unwrap();
-    assert_eq!(unx.as_str().unwrap(), "abc");
+    assert_eq!(unx.to_str().unwrap(), "abc");
     assert_eq!(unx.as_bytes(), b"abc".to_vec());
     assert_eq!(unx.as_bytes_with_nul(), b"abc\0".to_vec());
 

@@ -4,6 +4,7 @@ use std::fmt::Display;
 #[derive(Debug)]
 pub enum Error {
     InteriorNulByte,
+    MissingNulTerminator,
     IntoUtf8(std::str::Utf8Error),
     FromUtf8(std::string::FromUtf8Error),
     //#[error("IO error: {0}")]
@@ -29,6 +30,9 @@ impl Display for Error {
                 "Failed to create a String from a sequence of bytes: {0}",
                 err
             ),
+            Error::MissingNulTerminator => {
+                write!(f, "Invalid UnixString found: missing a nul terminator")
+            }
             Error::Io(err) => write!(f, "IO error: {}", err),
         }
     }

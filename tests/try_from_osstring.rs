@@ -7,7 +7,8 @@ fn empty_os_string() {
     let empty = OsString::from("");
     let unix_string = UnixString::try_from(empty.clone()).unwrap();
 
-    assert_eq!(empty.as_os_str(), unix_string.as_os_str())
+    assert_eq!(empty.as_os_str(), unix_string.as_os_str());
+    assert!(unix_string.is_empty())
 }
 
 #[test]
