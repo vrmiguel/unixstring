@@ -393,7 +393,7 @@ impl UnixString {
     }
 
     /// Gets the underlying byte view of this `UnixString` *including* the nul terminator.
-    /// 
+    ///
     /// ```rust
     /// use unixstring::UnixString;
     ///
@@ -499,18 +499,18 @@ impl UnixString {
     ///
     /// If you want to ensure that your `UnixString` is still valid after modified through [`as_mut_ptr`](UnixString::as_mut_ptr),
     /// check out [`UnixString::validate`](UnixString::validate).
-    /// 
+    ///
     /// See also: [`Vec::as_mut_ptr`](std::vec::Vec::as_mut_ptr)
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// let mut unx = UnixString::with_capacity(12);
     ///
     /// let ptr = unx.as_mut_ptr();
-    /// 
+    ///
     /// // This loop mocks a potential FFI call that uses this raw pointer
     /// for (idx, &byte) in b"hello world\0".iter().enumerate() {
     ///     unsafe {
@@ -518,17 +518,17 @@ impl UnixString {
     ///     }
     /// }
     ///
-    /// // Once you've written your data, you must set the 
+    /// // Once you've written your data, you must set the
     /// # // TODO: investigate a potential `truncate` function
     /// unsafe {
     ///     unx.set_len(12);
     /// }
-    /// 
+    ///
     /// // The internal representation was not broken
     /// assert!(unx.validate().is_ok());
-    /// 
+    ///
     /// assert!(matches!(unx.to_str(), Ok("hello world")));
-    /// 
+    ///
     /// ```
     pub fn as_mut_ptr(&mut self) -> *mut libc::c_char {
         // self.inner.as_mut_ptr() as *mut libc::c_char
@@ -538,17 +538,17 @@ impl UnixString {
     /// Forces the length of the inner buffer of `self` to `new_len`.
     ///
     /// This method can be useful for situations in which the `UnixString` is serving as a buffer for other code, particularly over FFI.
-    /// 
+    ///
     /// See [`UnixString::as_mut_ptr`](UnixString::as_mut_ptr) for an example usage of this function.
-    /// 
-    /// 
+    ///
+    ///
     /// # Safety
     ///
     /// - `new_len` must be less than or equal to [`capacity()`].
     /// - The elements at `old_len..new_len` must be initialized.
     ///
     /// [`capacity()`]: UnixString::capacity
-    /// 
+    ///
     /// See also: [`Vec::set_len`](Vec::set_len).
     pub unsafe fn set_len(&mut self, new_len: usize) {
         self.inner.set_len(new_len)
@@ -556,12 +556,12 @@ impl UnixString {
 
     /// Returns the number of bytes this `UnixString` can hold without
     /// reallocating.
-    /// 
+    ///
     /// Do note that the nul terminator byte *is* included in this count.
-    /// 
+    ///
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// assert_eq!(
     ///     // Capacity to hold 49 bytes + one byte for the nul terminator
     ///     UnixString::with_capacity(49).capacity(),
@@ -572,18 +572,18 @@ impl UnixString {
     }
 
     /// Returns the length of the underlying byte string *without* considering the nul terminator.
-    /// 
+    ///
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// let name = "John Doe";
     /// let unx = UnixString::from_string(name.to_string()).unwrap();
-    /// 
+    ///
     /// assert_eq!(
     ///     name.len(),
     ///     unx.len()
     /// );
-    /// 
+    ///
     /// ```
     pub fn len(&self) -> usize {
         self.inner.len().wrapping_sub(1)
@@ -593,46 +593,46 @@ impl UnixString {
     ///
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// let name = b"John Doe\0";
     /// let unx = UnixString::from_bytes(name.to_vec()).unwrap();
-    /// 
+    ///
     /// assert_eq!(
     ///     name.len(),
     ///     unx.len_with_nul()
     /// );
-    /// 
+    ///
     /// assert_eq!(
     ///     name.len(),
     ///     unx.len() + 1
     /// );
-    /// 
+    ///
     /// ```
     pub fn len_with_nul(&self) -> usize {
         self.inner.len()
     }
 
     /// Checks if `self` represents an empty byte string.
-    /// 
+    ///
     /// Note that `self` will never really be empty since a `UnixString` always allocates at least one byte
     /// to hold its nul terminator.
-    /// 
+    ///
     /// ```rust
     /// use unixstring::UnixString;
-    /// 
+    ///
     /// # use unixstring::Result;
     /// # fn main() -> Result<()> {
-    /// 
+    ///
     /// let mut unx = UnixString::new();
-    /// 
+    ///
     /// assert!(unx.is_empty());
-    /// 
-    /// unx.push("123321")?; 
-    /// 
+    ///
+    /// unx.push("123321")?;
+    ///
     /// assert_eq!(unx.is_empty(), false);
-    /// 
+    ///
     /// # Ok(()) }
-    /// 
+    ///
     /// ```
     pub fn is_empty(&self) -> bool {
         matches!(&*self.inner, &[0])

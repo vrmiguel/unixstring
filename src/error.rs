@@ -11,6 +11,8 @@ pub enum Error {
     Io(std::io::Error),
 }
 
+impl std::error::Error for Error {}
+
 /// A [`Result`](std::result::Result) type alias for this crate’s [`Error`] type.
 pub type Result<T> = std::result::Result<T, Error>;
 
